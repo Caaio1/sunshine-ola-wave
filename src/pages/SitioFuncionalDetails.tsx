@@ -65,6 +65,7 @@ export default function SitioFuncionalDetails() {
     try {
       // Buscar dados básicos do sítio
       const sitioResponse = await unidadesNaoInternacao.obterSitio(
+        unidadeId,
         sitioId
       );
 

@@ -75,9 +75,9 @@
     );
 
     /* Shadows */
-    --shadow-card: 0 1px 3px 0 hsl(var(--primary-hospital) / 0.1);
-    --shadow-hover: 0 2px 6px -2px hsl(var(--secondary-hospital) / 0.12);
-    --shadow-primary: 0 2px 8px -2px hsl(var(--primary-hospital) / 0.15);
+    --shadow-card: 0 2px 8px -2px hsl(var(--primary-hospital) / 0.1);
+    --shadow-hover: 0 4px 12px -2px hsl(var(--secondary-hospital) / 0.15);
+    --shadow-primary: 0 4px 20px -4px hsl(var(--primary-hospital) / 0.3);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -165,7 +165,8 @@
 
 @layer components {
   .hospital-card {
-    @apply bg-card border border-border/20 relative overflow-hidden rounded-lg;
+    @apply bg-card shadow-[var(--shadow-card)] border border-border relative overflow-hidden;
+    background: var(--gradient-card);
     transition: var(--transition-smooth);
   }
 
@@ -182,7 +183,8 @@
   }
 
   .hospital-card:hover {
-    border-color: hsl(var(--primary-hospital) / 0.3);
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-4px);
   }
 
   .hospital-card:hover::before {
@@ -190,7 +192,9 @@
   }
 
   .hospital-button-primary {
-    @apply bg-primary text-primary-foreground hover:bg-secondary;
+    @apply bg-primary text-primary-foreground hover:bg-secondary relative overflow-hidden;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-primary);
     transition: var(--transition-smooth);
   }
 
@@ -211,7 +215,8 @@
   }
 
   .hospital-button-primary:hover {
-    @apply bg-secondary;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
   }
 
   .hospital-button-primary:hover::before {
