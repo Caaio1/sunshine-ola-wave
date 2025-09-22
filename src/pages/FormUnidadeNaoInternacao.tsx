@@ -156,8 +156,6 @@ export default function FormUnidadeNaoInternacao() {
           numero: s.numero,
           nome: s.nome,
           tipo: s.tipo,
-          tempo_padrao_procedimento: s.tempo_padrao_procedimento,
-          especificacoes: s.especificacoes || {},
         })),
         cargos_unidade: unidade.cargosUnidade.map((c) => ({
           cargoId: c.cargoId,

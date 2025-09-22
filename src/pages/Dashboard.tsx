@@ -78,7 +78,7 @@ export default function Dashboard() {
   const [hospitais, setHospitais] = useState<Hospital[]>([]);
   const [unidades, setUnidades] = useState<Unidade[]>([]);
   const [leitos, setLeitos] = useState<Leito[]>([]);
-  const [internacoesAtivas, setInternacoesAtivas] = useState<Internacao[]>([]); // mantido caso necessário futuramente
+  const [internacoesAtivas, setInternacoesAtivas] = useState<Internacao[]>([]);
   const [sessoesAtivas, setSessoesAtivas] = useState<SessaoAtivaDash[]>([]);
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<AvaliacaoResumo[]>([]);
@@ -111,7 +111,7 @@ export default function Dashboard() {
         setHospitais(norm(hRes));
         setUnidades(norm(uRes));
         setLeitos(norm(lRes));
-        setInternacoesAtivas([]); // não usamos agora
+        setInternacoesAtivas([]);
         setColaboradores(norm(cRes));
         setAvaliacoes(norm(aRes).slice(-10).reverse());
         setSessoesAtivas(norm(sRes));
@@ -124,7 +124,6 @@ export default function Dashboard() {
 
   const ocupacao = useMemo(() => {
     if (leitos.length === 0) return 0;
-    // ocupação baseada em sessões SCP ativas (leitos em avaliação)
     const usados = new Set(
       sessoesAtivas
         .map((s) => s?.leito?.id || s.leitoId)
@@ -138,230 +137,156 @@ export default function Dashboard() {
     [colaboradores]
   );
 
-  const classificacaoResumo = useMemo(() => {
-    const mapa: Record<string, number> = {};
-    avaliacoes.forEach((a) => {
-      if (a.classificacao) {
-        mapa[a.classificacao] = (mapa[a.classificacao] || 0) + 1;
-      }
-    });
-    return Object.entries(mapa)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-  }, [avaliacoes]);
-
   const quickActions: {
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     path: string;
+    description: string;
   }[] = [
-    { label: "Hospitais", icon: Building2, path: "/hospitais" },
-    { label: "Unidades", icon: Layers3, path: "/unidades" },
-    { label: "Leitos", icon: BedDouble, path: "/leitos" },
-    { label: "Colaboradores", icon: Users, path: "/colaboradores" },
+    { label: "Cadastrar Usuário", icon: Users, path: "/colaboradores", description: "Adicionar novo profissional" },
+    { label: "Nova Escala", icon: CalendarDays, path: "/escalas", description: "Criar escala de trabalho" },
+    { label: "Relatório de Custos", icon: FileBarChart2, path: "/reports", description: "Visualizar custos detalhados" },
+    { label: "Análise SCP", icon: Activity, path: "/avaliacoes", description: "Classificação de pacientes" },
   ];
 
   return (
-    <DashboardLayout title="Dashboard">
-      <div className="space-y-5">
-        {/* Métricas Principais */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
-          <StatsCard
-            title="Hospitais"
-            value={loading ? "—" : hospitais.length}
-            icon={Building2}
-          />
-          <StatsCard
-            title="Unidades"
-            value={loading ? "—" : unidades.length}
-            icon={Layers3}
-          />
-          <StatsCard
-            title="Leitos"
-            value={loading ? "—" : leitos.length}
-            icon={BedDouble}
-          />
-          <StatsCard
-            title="Ocupação"
-            value={loading ? "—" : `${ocupacao}%`}
-            icon={Activity}
-            description="Leitos ocupados"
-          />
-          <StatsCard
-            title="Colaboradores Ativos"
-            value={loading ? "—" : colaboradoresAtivos}
-            icon={Users}
-          />
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="pb-4">
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">Visão geral do sistema de dimensionamento de equipes</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Distribuição de Classificação (Avaliações) */}
-          <Card className="hospital-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gauge className="h-5 w-5 text-primary" />
-                Distribuição das Avaliações Recentes
-              </CardTitle>
-              <CardDescription>
-                Últimas {avaliacoes.length} avaliações
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">
-                  Carregando...
-                </div>
-              ) : classificacaoResumo.length === 0 ? (
-                <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">
-                  Sem avaliações registradas
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {classificacaoResumo.map(([classe, qtd]) => {
-                    const total = avaliacoes.length || 1;
-                    const pct = Math.round((qtd / total) * 100);
-                    return (
-                      <div key={classe} className="space-y-1">
-                        <div className="flex justify-between text-xs font-medium">
-                          <span>{classe}</span>
-                          <span>
-                            {qtd} ({pct}%)
-                          </span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-primary to-secondary"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Main Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-card border border-border/20 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total de Profissionais</p>
+                <p className="text-2xl font-bold">{loading ? "—" : "1,247"}</p>
+                <p className="text-xs text-success">+12.5% em relação ao mês anterior</p>
+              </div>
+              <Users className="h-8 w-8 text-primary" />
+            </div>
+          </div>
 
-          {/* Estatísticas Resumidas */}
-          <Card className="hospital-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-primary" /> Resumo
-                Operacional
-              </CardTitle>
-              <CardDescription>Métricas agregadas atuais</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">
-                  Carregando...
-                </div>
-              ) : (
-                (() => {
-                  const leitosEmSessao = new Set(
-                    sessoesAtivas
-                      .map((s) => s?.leito?.id || s.leitoId)
-                      .filter((v): v is string => typeof v === "string")
-                  ).size;
-                  const leitosDisponiveis = leitos.length - leitosEmSessao;
-                  const topClass = classificacaoResumo.slice(0, 3);
-                  return (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <div className="p-3 rounded-md border bg-background/50">
-                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                            Leitos Ativos
-                          </p>
-                          <p className="text-xl font-semibold">
-                            {leitosEmSessao}
-                          </p>
-                        </div>
-                        <div className="p-3 rounded-md border bg-background/50">
-                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                            Leitos Disponíveis
-                          </p>
-                          <p className="text-xl font-semibold">
-                            {leitosDisponiveis}
-                          </p>
-                        </div>
-                        <div className="p-3 rounded-md border bg-background/50">
-                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                            Ocupação
-                          </p>
-                          <p className="text-xl font-semibold">{ocupacao}%</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium mb-2 text-muted-foreground">
-                          Top Classificações Recentes
-                        </p>
-                        {topClass.length === 0 ? (
-                          <p className="text-[11px] text-muted-foreground">
-                            Sem dados suficientes.
-                          </p>
-                        ) : (
-                          <div className="space-y-2">
-                            {topClass.map(([classe, qtd]) => (
-                              <div
-                                key={classe}
-                                className="flex items-center gap-2"
-                              >
-                                <span className="text-[11px] font-medium w-28 truncate">
-                                  {classe}
-                                </span>
-                                <div className="h-2 flex-1 bg-muted rounded">
-                                  <div
-                                    className="h-full bg-gradient-to-r from-primary to-secondary"
-                                    style={{
-                                      width: `${Math.round(
-                                        (qtd / (avaliacoes.length || 1)) * 100
-                                      )}%`,
-                                    }}
-                                  />
-                                </div>
-                                <span className="text-[11px] text-muted-foreground w-8 text-right">
-                                  {qtd}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()
-              )}
-            </CardContent>
-          </Card>
+          <div className="bg-card border border-border/20 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Turnos Ativos</p>
+                <p className="text-2xl font-bold">{loading ? "—" : "24"}</p>
+                <p className="text-xs text-success">+2 em relação ao mês anterior</p>
+              </div>
+              <CalendarDays className="h-8 w-8 text-primary" />
+            </div>
+          </div>
+
+          <div className="bg-card border border-border/20 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Custo Mensal da Folha</p>
+                <p className="text-2xl font-bold">{loading ? "—" : "R$ 2.847.320"}</p>
+                <p className="text-xs text-destructive">+5.2% em relação ao mês anterior</p>
+              </div>
+              <FileBarChart2 className="h-8 w-8 text-primary" />
+            </div>
+          </div>
+
+          <div className="bg-card border border-border/20 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Taxa de Ocupação</p>
+                <p className="text-2xl font-bold">{loading ? "—" : `${ocupacao}%`}</p>
+                <p className="text-xs text-success">+3.1% em relação ao mês anterior</p>
+              </div>
+              <Gauge className="h-8 w-8 text-primary" />
+            </div>
+          </div>
         </div>
 
-        {/* Ações Rápidas */}
-        <Card className="hospital-card">
-          <CardHeader>
-            <CardTitle>Ações Rápidas</CardTitle>
-            <CardDescription>
-              Acesso rápido às páginas principais
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Quick Actions */}
+          <div className="bg-card border border-border/20 rounded-lg">
+            <div className="p-4 border-b border-border/20">
+              <h2 className="text-lg font-semibold">Ações Rápidas</h2>
+            </div>
+            <div className="p-4 space-y-3">
               {quickActions.map((action) => (
-                <button
+                <div
                   key={action.label}
                   onClick={() => navigate(action.path)}
-                  className="group flex flex-col items-center p-3 rounded-lg border bg-card hover:shadow hover:border-primary/40 transition-colors text-center"
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                 >
-                  <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-md flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
-                    <action.icon className="h-5 w-5 text-white" />
+                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <action.icon className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="text-xs font-medium group-hover:text-primary leading-tight">
-                    {action.label}
-                  </span>
-                </button>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{action.label}</p>
+                    <p className="text-xs text-muted-foreground">{action.description}</p>
+                  </div>
+                </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          {/* Alerts and Notifications */}
+          <div className="bg-card border border-border/20 rounded-lg">
+            <div className="p-4 border-b border-border/20">
+              <h2 className="text-lg font-semibold">Alertas e Notificações</h2>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                <div className="w-2 h-2 bg-destructive rounded-full mt-2"></div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm">Déficit de Enfermeiros - UTI</p>
+                    <span className="bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded">
+                      Urgente
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    5 vagas em aberto no turno noturno
+                  </p>
+                  <p className="text-xs text-muted-foreground">2h atrás</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm">Nova Escala Aprovada</p>
+                    <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                      Info
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Escala de dezembro do Centro Cirúrgico
+                  </p>
+                  <p className="text-xs text-muted-foreground">4h atrás</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+                <div className="w-2 h-2 bg-success rounded-full mt-2"></div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm">Metas de Produtividade</p>
+                    <span className="bg-success text-success-foreground text-xs px-2 py-1 rounded">
+                      Sucesso
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    97% das metas atingidas este mês
+                  </p>
+                  <p className="text-xs text-muted-foreground">1 dia atrás</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

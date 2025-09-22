@@ -1,17 +1,16 @@
-import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   BarChart3,
-  FileText,
   Database,
   TrendingUp,
-  ChevronLeft,
-  ChevronRight,
-  CheckSquare,
   Users,
+  Building2,
+  Layers3,
+  BedDouble,
+  Gauge,
+  FileBarChart2,
+  CalendarDays,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { DimensionaLogo } from "./DimensionaLogo";
 import {
   Sidebar,
   SidebarContent,
@@ -24,53 +23,43 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 const navigationItems = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
-  { title: "Hospitais", url: "/hospitais", icon: Database },
-  { title: "Métodos SCP", url: "/metodos-scp", icon: TrendingUp },
-];
-
-const qualitativoItems = [
-  { title: "Áreas", url: "/qualitativo/areas", icon: Database },
-  { title: "Configuraões", url: "/qualitativo/settings", icon: CheckSquare },
-  { title: "Coletas", url: "/api-docs", icon: Users },
+  { title: "Usuários e Permissões", url: "/users", icon: Users },
+  { title: "Escalas e Turnos", url: "/teams", icon: CalendarDays },
+  { title: "Sistemas SCP", url: "/metodos-scp", icon: TrendingUp },
+  { title: "Equipes e Baseline", url: "/departments", icon: Building2 },
+  { title: "Custos da Folha", url: "/reports", icon: FileBarChart2 },
+  { title: "Sítios Funcionais", url: "/sitios", icon: Layers3 },
 ];
 
 export function HospitalSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const location = useLocation();
-  const currentPath = location.pathname;
   const collapsed = state === "collapsed";
-  const { logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-  };
+  const isActive = (path: string) => location.pathname === path || 
+    (path === "/dashboard" && location.pathname === "/");
 
   return (
-    <Sidebar className="bg-white border-r border-gray-200" collapsible="icon">
-      <SidebarHeader className="border-b border-gray-200 px-3 py-4 bg-white flex items-center justify-between">
-        {!collapsed}
-        {/* Mostrar apenas o botão quando colapsado */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100"
-          title={collapsed ? "Expandir" : "Recolher"}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
+    <Sidebar className="bg-white border-r border-border/20" collapsible="icon">
+      <SidebarHeader className="border-b border-border/20 px-4 py-3 bg-white">
+        <div className="flex items-center">
+          {!collapsed && (
+            <div className="flex flex-col">
+              <div className="text-sm font-semibold text-primary">MedStaff</div>  
+              <div className="text-xs text-muted-foreground">Sistema de Dimensionamento</div>
+            </div>
           )}
-        </Button>
+        </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4 bg-white">
+      <SidebarContent className="px-2 py-4 bg-white">
         <SidebarGroup>
+          <SidebarGroupLabel className={`text-xs font-medium text-muted-foreground mb-2 px-2 ${collapsed ? "sr-only" : ""}`}>
+            Menu Principal
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => (
@@ -78,21 +67,15 @@ export function HospitalSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      className={({ isActive }) => {
-                        const base =
-                          "w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 font-medium";
-                        if (isActive)
-                          return `${base} hover:hospital-button-primary text-black shadow-md`;
-                        return `${base} text-black hover:hospital-button-primary hover:text-white hover:shadow-md hover:scale-[1.02]`;
-                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm font-medium ${
+                        isActive(item.url)
+                          ? "bg-primary text-primary-foreground"
+                          : "text-foreground hover:bg-muted hover:text-foreground"
+                      }`}
                       title={collapsed ? item.title : undefined}
                     >
-                      <item.icon
-                        className={`h-5 w-5 flex-shrink-0 ${"text-black hover:text-white"}`}
-                      />
-                      {!collapsed && (
-                        <span className="font-normal">{item.title}</span>
-                      )}
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -100,49 +83,6 @@ export function HospitalSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {/*  
-        <SidebarGroup className="mt-8">
-          <SidebarGroupLabel
-            className={`text-xs font-semibold text-[#003151] uppercase tracking-wider mb-3 px-3 ${
-              collapsed ? "sr-only" : ""
-            }`}
-          >
-          Módulo Qualitativo
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {qualitativoItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        `w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors font-medium ${
-                          isActive
-                            ? "bg-[#0B6F88] text-white"
-                            : "text-gray-700 hover:bg-blue-50 hover:text-[#0B6F88]"
-                        }`
-                      }
-                      title={collapsed ? item.title : undefined}
-                    >
-                      <item.icon
-                        className={`h-5 w-5 flex-shrink-0 ${
-                          location.pathname === item.url
-                            ? "text-white"
-                            : "text-gray-600"
-                        }`}
-                      />
-                      {!collapsed && (
-                        <span className="font-normal">{item.title}</span>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>*/}
       </SidebarContent>
     </Sidebar>
   );
