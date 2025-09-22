@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Use Vite environment variable if provided, fallback to localhost for dev
 export const API_BASE_URL =
-  (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3110";
+  (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
 /* export const API_BASE_URL = "http://localhost:3110";*/
 /**export const API_BASE_URL = "https://dimensiona.genustecnologia.com.br/api"; */
 
