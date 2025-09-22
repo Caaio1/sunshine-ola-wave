@@ -31,7 +31,14 @@ import { toast, useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSelectedDate } from "@/hooks/useSelectedDate";
 import { MetodoScp } from "./MetodosScp";
-import { id } from "date-fns/locale";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface MetodoScpModel {
   id: string;
@@ -149,13 +156,6 @@ export default function MinhaUnidade() {
   const [coberturaPercent, setCoberturaPercent] = useState(0);
   const [leitosOcupadosCount, setLeitosOcupadosCount] = useState(0);
   const [metodoScp, setMetodoScp] = useState<MetodoScpModel | null>(null);
-  const [selectedLeito, setSelectedLeito] = useState<Leito | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [showInativoBox, setShowInativoBox] = useState(false);
-  const [justificativaInativo, setJustificativaInativo] = useState("");
-  const [inativando, setInativando] = useState(false);
-
-  // No timers needed anymore; backend expira sessões à meia-noite
 
   // Debug: contexto de autenticação e navegação
   useEffect(() => {
@@ -307,23 +307,22 @@ export default function MinhaUnidade() {
     );
   }, [leitos, sessoesAtivas, avaliacaoStatusMap]);
 
-  const handleOpen = (leito: Leito) => {
-    setSelectedLeito(leito);
-    setModalOpen(true);
+  const handleIniciarAvaliacao = (leito: Leito) => {
+    navigate(`/minha-unidade/${id}/leito/${leito.id}/avaliar`);
   };
 
-  const handleMarcarVago = async (leitoId: string) => {
+  const handleMarcarVago = async (leito: Leito) => {
     try {
-      console.log("Marcando leito como vago:", leitoId);
+      console.log("Marcando leito como vago:", leito.id);
 
-      const response = await leitosApi.alterarStatus(leitoId, "VAGO");
+      const response = await leitosApi.alterarStatus(leito.id, "VAGO");
       console.log("Resposta da API ao marcar como vago:", response);
       const updated =
         unwrapData<Record<string, any>>(response) ||
         (response as Record<string, any>);
       if (updated && updated.id) {
         setLeitos((prev) =>
-          prev.map((l) => (l.id === leitoId ? { ...l, ...updated } : l))
+          prev.map((l) => (l.id === leito.id ? { ...l, ...updated } : l))
         );
       } else {
         await carregarLeitos();
@@ -334,18 +333,13 @@ export default function MinhaUnidade() {
         description: "Leito marcado como vago",
       });
 
-      setModalOpen(false);
-    } catch (error) {
-      console.error("Erro ao marcar leito como vago:", error);
-      toast({
-        title: "Erro",
         description: "Falha ao marcar leito como vago",
         variant: "destructive",
       });
     }
   };
 
-  const filtered = leitos.filter((l) =>
+  const leitosFiltrados = leitos.filter((l) =>
     l.numero.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -459,352 +453,114 @@ export default function MinhaUnidade() {
                 />
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered
-                  .slice()
-                  .sort((a, b) =>
-                    a.numero.localeCompare(b.numero, undefined, {
-                      numeric: true,
-                      sensitivity: "base",
-                    })
-                  )
-                  .map((leito) => {
-                    const sessao = sessoesAtivas.find(
-                      (s) => (s?.leito?.id || s.leitoId) === leito.id
-                    );
-                    const status = avaliacaoStatusMap[leito.id];
-                    console.log("Leito : ", leito);
-                    const {
-                      badgeVariant,
-                      badgeLabel,
-                      badgeIcon,
-                      badgeClassName,
-                    } = getLeitoBadge(leito);
+              {/* Tabela de Leitos */}
+              <div className="bg-white rounded-lg border border-gray-200">
+                {leitosFiltrados.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <Bed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">Nenhum leito encontrado.</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Leito</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Avaliação</TableHead>
+                        <TableHead>Prontuário</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {leitosFiltrados
+                        .sort((a, b) =>
+                          a.numero.localeCompare(b.numero, undefined, {
+                            numeric: true,
+                            sensitivity: "base",
+                          })
+                        )
+                        .map((leito) => {
+                          const sessao = sessoesAtivas.find(
+                            (s) => (s?.leito?.id || s.leitoId) === leito.id
+                          );
+                          const { badgeVariant, badgeLabel, badgeIcon, badgeClassName } = getLeitoBadge(leito);
+                          const temAvaliacaoAtiva = sessao && sessao.statusSessao === "ATIVA";
 
-                    const borderColorClass = "border-l-primary";
-
-                    return (
-                      <Card
-                        key={leito.id}
-                        className={`cursor-pointer hover:shadow-md transition-shadow border-l-4 ${borderColorClass}`}
-                        onClick={() => handleOpen(leito)}
-                      >
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-base flex items-center">
-                              <User className="h-4 w-4 mr-2" /> Leito{" "}
-                              {leito.numero}
-                            </CardTitle>
-                            <div className="flex flex-col items-end gap-1">
-                              {badgeLabel && (
+                          return (
+                            <TableRow key={leito.id} className="hover:bg-gray-50">
+                              <TableCell>
+                                <div className="flex items-center space-x-3">
+                                  <Bed className="h-5 w-5 text-primary" />
+                                  <span className="font-semibold">Leito {leito.numero}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
                                 <Badge
                                   variant={badgeVariant}
-                                  className={`flex items-center space-x-1 text-xs ${
-                                    // append custom class if provided
-                                    (badgeClassName as string) || ""
-                                  }`}
+                                  className={`flex items-center space-x-1 ${badgeClassName || ""}`}
                                 >
                                   {badgeIcon}
                                   <span>{badgeLabel}</span>
                                 </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="text-xs space-y-1">
-                          {sessao && sessao.statusSessao === "ATIVA" ? (
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground">
-                                  Classificação
+                              </TableCell>
+                              <TableCell>
+                                {sessao && sessao.statusSessao === "ATIVA" ? (
+                                  <div className="space-y-1">
+                                    <div className="font-medium text-sm">
+                                      {sessao.classificacao || "—"}
+                                    </div>
+                                    {sessao.autor?.nome && (
+                                      <div className="text-xs text-gray-500">
+                                        por {sessao.autor.nome}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm">
+                                  {sessao?.prontuario || "—"}
                                 </span>
-                                <span className="font-medium">
-                                  {sessao.classificacao || "—"}
-                                </span>
-                              </div>
-                              {sessao.autor.nome && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground">
-                                    Avaliador
-                                  </span>
-                                  <span className="font-medium text-primary">
-                                    {sessao.autor.nome}
-                                  </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex space-x-2 justify-end">
+                                  {leito.status !== "INATIVO" && (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleMarcarVago(leito)}
+                                        disabled={leito.status === "VAGO"}
+                                      >
+                                        Marcar Vago
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleIniciarAvaliacao(leito)}
+                                        disabled={!!temAvaliacaoAtiva}
+                                      >
+                                        {sessao ? "Reavaliar" : "Avaliar"}
+                                      </Button>
+                                    </>
+                                  )}
                                 </div>
-                              )}
-                              {sessao.prontuario && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-muted-foreground">
-                                    Prontuário
-                                  </span>
-                                  <span className="font-medium">
-                                    {sessao.prontuario}
-                                  </span>
-                                </div>
-                              )}
-                              {/* near-expiry indicator removed: backend handles expiry */}
-                            </div>
-                          ) : (
-                            <div className="text-muted-foreground">
-                              Clique para ver detalhes
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                {filtered.length === 0 && (
-                  <Card>
-                    <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                      Nenhum leito encontrado.
-                    </CardContent>
-                  </Card>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                    </TableBody>
+                  </Table>
                 )}
               </div>
             </div>
           </div>
         )}
-
-        {/* Modal condicional baseado em user.role */}
-        {modalOpen &&
-          selectedLeito &&
-          (() => {
-            const sessao = sessoesAtivas.find(
-              (s) => (s?.leito?.id || s.leitoId) === selectedLeito.id
-            );
-            const status = avaliacaoStatusMap[selectedLeito.id];
-            const temAvaliacaoAtiva = sessao && sessao.statusSessao === "ATIVA";
-            const emAndamento = status === "em_andamento";
-
-            let statusDisplay: string;
-            if (status === "em_andamento") {
-              statusDisplay = "EM ANDAMENTO";
-            } else if (sessao) {
-              // Rely on backend-provided session status
-              statusDisplay =
-                sessao.statusSessao === "EXPIRADA" ? "EXPIRADA" : "AVALIADO";
-            } else if (selectedLeito.status === "VAGO") {
-              statusDisplay = "VAGO";
-            } else if (selectedLeito.status === "INATIVO") {
-              statusDisplay = "INATIVO";
-            } else {
-              // Status padrão (DESOCUPADO ou outros) = PENDENTE
-              statusDisplay = "PENDENTE";
-            }
-
-            return (
-              <div
-                className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                onClick={() => setModalOpen(false)}
-              >
-                <div
-                  className="bg-background rounded-lg p-6 max-w-md w-full mx-4"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h2 className="text-lg font-semibold mb-4">
-                    Detalhes do Leito {selectedLeito.numero}
-                  </h2>
-
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium">
-                        Status atual
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        {statusDisplay}
-                      </p>
-                    </div>
-
-                    {/* Última Avaliação Section */}
-                    {sessao && sessao.statusSessao === "ATIVA" && (
-                      <div className="space-y-2 p-3 bg-muted/20 rounded-lg border">
-                        <h3 className="text-sm font-medium flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4" />
-                          Última Avaliação
-                        </h3>
-
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          {sessao.prontuario && (
-                            <div>
-                              <span className="text-muted-foreground">
-                                Prontuário
-                              </span>
-                              <p className="font-medium">{sessao.prontuario}</p>
-                            </div>
-                          )}
-
-                          {sessao.classificacao && (
-                            <div>
-                              <span className="text-muted-foreground">
-                                Classificação
-                              </span>
-                              <p className="font-medium">
-                                {sessao.classificacao}
-                              </p>
-                            </div>
-                          )}
-
-                          {sessao.autor?.nome && (
-                            <div className="col-span-2">
-                              <span className="text-muted-foreground">
-                                Registrado por
-                              </span>
-                              <p className="font-medium">
-                                {sessao.autor?.nome}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedLeito?.status !== "INATIVO" ? (
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleMarcarVago(selectedLeito.id)}
-                          variant="outline"
-                          className="flex-1"
-                          disabled={
-                            statusDisplay === "VAGO" ||
-                            temAvaliacaoAtiva ||
-                            emAndamento
-                          }
-                        >
-                          Marcar como Vago
-                        </Button>
-
-                        <Button
-                          onClick={() => {
-                            setModalOpen(false);
-                            navigate(
-                              `/minha-unidade/${id}/leito/${selectedLeito.id}/avaliar`
-                            );
-                          }}
-                          className="flex-1"
-                          disabled={emAndamento}
-                        >
-                          {sessao ? "Reavaliar" : "Iniciar Avaliação"}
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-muted-foreground">
-                        Leito inativo
-                      </div>
-                    )}
-
-                    {selectedLeito?.status !== "ATIVO" &&
-                      selectedLeito?.status !== "INATIVO" && (
-                        <div className="mt-3">
-                          <Button
-                            variant="destructive"
-                            className="w-full"
-                            onClick={() => setShowInativoBox((s) => !s)}
-                          >
-                            Marcar como Inativo
-                          </Button>
-                        </div>
-                      )}
-
-                    {showInativoBox && (
-                      <div className="mt-4 p-4 bg-red-50 border border-destructive/30 rounded-md">
-                        <Label className="text-sm font-medium">
-                          Justificativa
-                        </Label>
-                        <Textarea
-                          value={justificativaInativo}
-                          onChange={(e) =>
-                            setJustificativaInativo(e.target.value)
-                          }
-                          placeholder="Informe a justificativa para marcar o leito como inativo"
-                          className="w-full mt-2"
-                        />
-                        <div className="flex justify-end mt-2 gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowInativoBox(false)}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={async () => {
-                              if (!selectedLeito) return;
-                              if (
-                                !justificativaInativo ||
-                                justificativaInativo.trim().length < 3
-                              ) {
-                                toast({
-                                  title: "Justificativa necessária",
-                                  description:
-                                    "Informe uma justificativa com ao menos 3 caracteres.",
-                                  variant: "destructive",
-                                });
-                                return;
-                              }
-                              try {
-                                setInativando(true);
-                                const response = await leitosApi.alterarStatus(
-                                  selectedLeito.id,
-                                  "INATIVO",
-                                  justificativaInativo.trim()
-                                );
-                                const updated =
-                                  unwrapData<Record<string, any>>(response) ||
-                                  (response as Record<string, any>);
-                                if (updated && updated.id) {
-                                  setLeitos((prev) =>
-                                    prev.map((l) =>
-                                      l.id === selectedLeito.id
-                                        ? { ...l, ...updated }
-                                        : l
-                                    )
-                                  );
-                                } else {
-                                  await carregarLeitos();
-                                }
-                                toast({
-                                  title: "Sucesso",
-                                  description: "Leito marcado como inativo",
-                                });
-                                setShowInativoBox(false);
-                                setJustificativaInativo("");
-                                setModalOpen(false);
-                              } catch (err) {
-                                console.error(
-                                  "Erro ao marcar leito como inativo:",
-                                  err
-                                );
-                                toast({
-                                  title: "Erro",
-                                  description:
-                                    "Falha ao marcar leito como inativo",
-                                  variant: "destructive",
-                                });
-                              } finally {
-                                setInativando(false);
-                              }
-                            }}
-                            disabled={inativando}
-                          >
-                            {inativando
-                              ? "Marcando..."
-                              : "Confirmar Inativação"}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    <Button
-                      onClick={() => setModalOpen(false)}
-                      variant="ghost"
-                      className="w-full"
-                    >
-                      Fechar
-                    </Button>
-                  </div>
-                </div>
               </div>
-            );
-          })()}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

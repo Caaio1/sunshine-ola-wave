@@ -5,14 +5,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { SelectedDateProvider } from "@/hooks/useSelectedDate";
-// Unified login page
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Avaliacoes from "./pages/Avaliacoes";
 import RelatoriosMensal from "./pages/RelatoriosMensal";
 import Hospitais from "./pages/Hospitais";
+import HospitalForm from "./pages/HospitalForm";
 import Unidades from "./pages/Unidades";
+import UnidadeForm from "./pages/UnidadeForm";
 import Colaboradores from "./pages/Colaboradores";
+import ColaboradorForm from "./pages/ColaboradorForm";
 import MetodosScp from "./pages/MetodosScp";
 import Cargos from "./pages/Cargos";
 import Leitos from "./pages/Leitos";
@@ -30,7 +32,6 @@ import IniciarAvaliacao from "./pages/IniciarAvaliacao";
 import ListaDias from "./pages/ListaDias";
 import PrimeiroAcesso from "./pages/PrimeiroAcesso";
 
-// Unidades de Não-Internação
 import UnidadesNaoInternacao from "./pages/UnidadesNaoInternacao";
 import UnidadeNaoInternacaoDetails from "./pages/UnidadeNaoInternacaoDetails";
 import SitioFuncionalDetails from "./pages/SitioFuncionalDetails";
@@ -74,10 +75,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
-              {/* legacy separate login routes removed - unified single /login route */}
               <Route path="/forgot-password" element={<ForgotPassword />} />
 
-              {/* Rotas ADMIN */}
               <Route
                 path="/dashboard"
                 element={
@@ -111,6 +110,22 @@ const App = () => (
                 }
               />
               <Route
+                path="/hospitais/novo"
+                element={
+                  <AdminRoute>
+                    <HospitalForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/hospitais/:id/editar"
+                element={
+                  <AdminRoute>
+                    <HospitalForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
                 path="/hospitais/:id"
                 element={
                   <AdminRoute>
@@ -119,7 +134,6 @@ const App = () => (
                 }
               />
 
-              {/* Rotas para Unidades de Não-Internação */}
               <Route
                 path="/hospitais/:hospitalId/unidades-nao-internacao"
                 element={
@@ -154,6 +168,22 @@ const App = () => (
                 }
               />
               <Route
+                path="/unidades/nova"
+                element={
+                  <AdminRoute>
+                    <UnidadeForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/unidades/:id/editar"
+                element={
+                  <AdminRoute>
+                    <UnidadeForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
                 path="/unidades/:id/leitos"
                 element={
                   <AdminRoute>
@@ -166,6 +196,22 @@ const App = () => (
                 element={
                   <AdminRoute>
                     <Colaboradores />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/colaboradores/novo"
+                element={
+                  <AdminRoute>
+                    <ColaboradorForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/colaboradores/:id/editar"
+                element={
+                  <AdminRoute>
+                    <ColaboradorForm />
                   </AdminRoute>
                 }
               />
@@ -234,7 +280,6 @@ const App = () => (
                   </AuthenticatedRoute>
                 }
               />
-              {/* Rotas COLAB */}
               <Route
                 path="/meu-hospital"
                 element={
@@ -267,7 +312,6 @@ const App = () => (
                   </ColabRoute>
                 }
               />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </HashRouter>

@@ -29,14 +29,14 @@ import { Button } from "@/components/ui/button";
 const navigationItems = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
   { title: "Hospitais", url: "/hospitais", icon: Database },
+  { title: "Unidades", url: "/unidades", icon: TrendingUp },
+  { title: "Colaboradores", url: "/colaboradores", icon: Users },
+  { title: "Leitos", url: "/leitos", icon: CheckSquare },
   { title: "Métodos SCP", url: "/metodos-scp", icon: TrendingUp },
+  { title: "Cargos", url: "/cargos", icon: Users },
 ];
 
-const qualitativoItems = [
-  { title: "Áreas", url: "/qualitativo/areas", icon: Database },
-  { title: "Configuraões", url: "/qualitativo/settings", icon: CheckSquare },
-  { title: "Coletas", url: "/api-docs", icon: Users },
-];
+// Removido qualitativoItems - simplificando navegação
 
 export function HospitalSidebar() {
   const { state, toggleSidebar } = useSidebar();
@@ -101,48 +101,6 @@ export function HospitalSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/*  
-        <SidebarGroup className="mt-8">
-          <SidebarGroupLabel
-            className={`text-xs font-semibold text-[#003151] uppercase tracking-wider mb-3 px-3 ${
-              collapsed ? "sr-only" : ""
-            }`}
-          >
-          Módulo Qualitativo
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {qualitativoItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        `w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors font-medium ${
-                          isActive
-                            ? "bg-[#0B6F88] text-white"
-                            : "text-gray-700 hover:bg-blue-50 hover:text-[#0B6F88]"
-                        }`
-                      }
-                      title={collapsed ? item.title : undefined}
-                    >
-                      <item.icon
-                        className={`h-5 w-5 flex-shrink-0 ${
-                          location.pathname === item.url
-                            ? "text-white"
-                            : "text-gray-600"
-                        }`}
-                      />
-                      {!collapsed && (
-                        <span className="font-normal">{item.title}</span>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>*/}
       </SidebarContent>
     </Sidebar>
   );
